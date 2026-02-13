@@ -13,7 +13,6 @@ interface OEmbedResponse {
   author_name: string;
   author_url: string;
   thumbnail_url?: string;
-  description?: string;
 }
 
 async function resolveShortLink(shortCode: string): Promise<string | null> {
@@ -58,9 +57,6 @@ function escapeHtml(str: string): string {
 function buildOgHtml(data: OEmbedResponse, path: string): string {
   const soundcloudUrl = `https://soundcloud.com${path}`;
   const title = escapeHtml(data.title);
-  const description = data.description
-    ? escapeHtml(data.description.slice(0, 200))
-    : title;
   const image = data.thumbnail_url || "";
 
   return `<!DOCTYPE html>
@@ -69,14 +65,12 @@ function buildOgHtml(data: OEmbedResponse, path: string): string {
   <meta charset="utf-8">
   <title>${title}</title>
   <meta property="og:title" content="${title}">
-  <meta property="og:description" content="${description}">
   <meta property="og:type" content="music.song">
   <meta property="og:url" content="${soundcloudUrl}">
   <meta property="og:site_name" content="SoundCloud">
   ${image ? `<meta property="og:image" content="${image}">` : ""}
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${title}">
-  <meta name="twitter:description" content="${description}">
   ${image ? `<meta name="twitter:image" content="${image}">` : ""}
   <meta name="theme-color" content="#ff5500">
 </head>
