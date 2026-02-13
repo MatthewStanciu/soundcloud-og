@@ -16,6 +16,20 @@ interface OEmbedResponse {
   description?: string;
 }
 
+async function resolveShortLink(shortCode: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://on.soundcloud.com${shortCode}`, {
+      redirect: "manual",
+    });
+    const location = res.headers.get("location");
+    if (!location) return null;
+    const url = new URL(location);
+    return url.pathname + url.search;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchSoundCloudData(
   path: string
 ): Promise<OEmbedResponse | null> {
@@ -77,8 +91,21 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  const path = req.url || "/";
+  let path = req.url || "/";
   const userAgent = req.headers["user-agent"] as string | undefined;
+  const host = req.headers.host || "";
+  const isShortLink = host.startsWith("on.");
+
+  // on.soundcloud.com short links (shared from e.g. phone)
+  if (isShortLink && path !== "/" && path !== "") {
+    const resolved = await resolveShortLink(path);
+    if (resolved) {
+      path = resolved;
+    } else {
+      res.redirect(308, `https://on.soundcloud.com${path}`);
+      return;
+    }
+  }
 
   if (path === "/" || path === "") {
     res.setHeader("Content-Type", "text/html");
